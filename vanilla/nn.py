@@ -1,11 +1,12 @@
 from _math import Math
+import time
 import random
 from tqdm import trange
 import numpy as np
 import time
 
-class NN:
-  epochs = 10
+class NN():
+  epochs = 1000
   batch_sz = 128 
 
   def __init__(self, layers, learning_rate=0.001):
@@ -60,7 +61,6 @@ class NN:
   def activate(self, arr):
     return [self.activation(x) for x in arr]
   
-  import time
   def forward(self, x): 
     assert len(x) == self.inputs
 
@@ -69,17 +69,12 @@ class NN:
 
     for layer in range(self.layer_cnt):
       start_time = time.time()
-      # print("1 --- %.2f seconds ---" % (time.time() - start_time))
       if layer == 0:
         activated_layers[layer] = self.copy_shape(x, with_values=True)
         continue
-      # print("2 --- %.2f seconds ---" % (time.time() - start_time))
       unactivated_layers[layer] = Math.dot(self.weights[layer], activated_layers[layer - 1])
-      # print("3 --- %.2f seconds ---" % (time.time() - start_time))
       unactivated_layers[layer] = Math.add(self.biases[layer], unactivated_layers[layer])
-      # print("4 --- %.2f seconds ---" % (time.time() - start_time))
       activated_layers[layer] = self.activate(unactivated_layers[layer]) 
-      # print("5 --- %.2f seconds ---" % (time.time() - start_time))
 
     return (self.copy_shape(activated_layers[-1], with_values=True), unactivated_layers, activated_layers)
   
@@ -103,22 +98,25 @@ class NN:
       total_weight_grads = self.copy_shape(self.weights, with_values=False)
       total_bias_grads = self.copy_shape(self.biases, with_values=False)
 
-      for idx in batch_ids:
+      training_unactivated_layers = self.create_arr(self.batch_sz)
+      training_activated_layers = self.create_arr(self.batch_sz)
+      desired_outputs = self.create_arr(self.batch_sz)
+
+      start_time = time.time()
+      for i, idx in enumerate(batch_ids):
         input = inputs[idx]
         output = self.format_output(outputs[idx])
+        desired_outputs[i] = output
 
-        _, unactivated_layers, activated_layers = self.forward(input)
-        weight_grads, bias_grads = self.backward(output, unactivated_layers, activated_layers)
-
-        total_weight_grads = Math.add(total_weight_grads, weight_grads)
-        total_bias_grads = Math.add(total_bias_grads, bias_grads)
+        _, training_unactivated_layers[i], training_activated_layers[i] = self.forward(input)
       
-      average_gradient = lambda gradient: gradient / self.batch_sz
-      averaged_weight_grads = Math.apply(total_weight_grads, average_gradient)
-      averaged_bias_grads = Math.apply(total_bias_grads, average_gradient)
-
-      self.apply_gradients(averaged_weight_grads, averaged_bias_grads)
-
+      print("3 --- %.2f seconds ---" % (time.time() - start_time))
+      start_time = time.time()
+      weight_grads, bias_grads = self.backward(desired_outputs, training_unactivated_layers, training_activated_layers)
+      print("4 --- %.2f seconds ---" % (time.time() - start_time))
+      start_time = time.time()
+      self.apply_gradients(weight_grads, bias_grads)
+      print("5 --- %.2f seconds ---" % (time.time() - start_time))
     
   def parse_output(self, output):
     mx = max(output) 
@@ -157,40 +155,43 @@ class NN:
 
   def backward(self, desired_output, unactivated_layers, activated_layers):
     weight_grads = self.copy_shape(self.weights)
-    activated_grads = self.copy_shape(self.biases)
-    activated_grads[0] = self.create_arr(self.inputs, random_init=False)
     bias_grads = self.copy_shape(self.biases)
 
-    # print(np.asarray(a_layers).shape)
+    for batch in range(self.batch_sz):
+      activated_grads = self.copy_shape(self.biases)
+      activated_grads[0] = self.create_arr(self.inputs, random_init=False)
+
+      for i in range(self.outputs):
+        result = activated_layers[batch][-1][i]
+        desired = desired_output[batch][i]
+        activated_grads[-1][i] = self.get_activated_grad(result, desired) 
+      
+      # calculate gradients
+      for layer in reversed(range(self.layer_cnt)):
+        if layer == 0:
+          continue
+
+        for dest in range(self.layers[layer]):
+          unactivated_output = unactivated_layers[batch][layer][dest]
+          d_activated_wrt_unactivated = Math.derivative_sigmoid(unactivated_output)
+          bias_grads[layer][dest] += self.get_bias_grad(d_activated_wrt_unactivated, activated_grads[layer][dest])
+  
+          prev_layer = layer - 1
+          prev_layer_n_cnt = self.layers[prev_layer]
+
+          for src in range(prev_layer_n_cnt):
+            activated_output = activated_layers[batch][prev_layer][src]
+            d_unactivated_wrt_weight = activated_output
+
+            weight_grads[layer][dest][src] += self.get_weight_grad(d_unactivated_wrt_weight, d_activated_wrt_unactivated, activated_grads[layer][dest])
+
+            if prev_layer >= 0: 
+              weight = self.weights[layer][dest][src]
+              d_unactivated_wrt_activated = weight
+              activated_grads[prev_layer][src] += d_unactivated_wrt_activated * d_activated_wrt_unactivated * activated_grads[layer][dest]
     
-    for i in range(self.outputs):
-      result = activated_layers[-1][i]
-      desired = desired_output[i]
-      activated_grads[-1][i] = self.get_activated_grad(result, desired) 
-    
-    # calculate gradients
-    for layer in reversed(range(self.layer_cnt)):
-      if layer == 0:
-        continue
-
-      for dest in range(self.layers[layer]):
-        unactivated_output = unactivated_layers[layer][dest]
-        d_activated_wrt_unactivated = Math.derivative_sigmoid(unactivated_output)
-        bias_grads[layer][dest] = self.get_bias_grad(d_activated_wrt_unactivated, activated_grads[layer][dest])
- 
-        prev_layer = layer - 1
-        prev_layer_n_cnt = self.layers[prev_layer]
-
-        for src in range(prev_layer_n_cnt):
-          activated_output = activated_layers[prev_layer][src]
-          d_unactivated_wrt_weight = activated_output
-
-          weight_grads[layer][dest][src] = self.get_weight_grad(d_unactivated_wrt_weight, d_activated_wrt_unactivated, activated_grads[layer][dest])
-
-          if prev_layer >= 0: 
-            weight = self.weights[layer][dest][src]
-            d_unactivated_wrt_activated = weight
-            activated_grads[prev_layer][src] += d_unactivated_wrt_activated * d_activated_wrt_unactivated * activated_grads[layer][dest]
-    
-    return (weight_grads, bias_grads)
+    average_gradient = lambda gradient: gradient / self.batch_sz
+    averaged_weight_grads = Math.apply(weight_grads, average_gradient)
+    averaged_bias_grads = Math.apply(bias_grads, average_gradient)
+    return (averaged_weight_grads, averaged_bias_grads)
     

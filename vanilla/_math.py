@@ -1,22 +1,12 @@
 import math
 import random
 import numpy as np
+random.seed(1)
 
 class Math:
   @staticmethod 
   def dot(m, v):
-    # return np.asarray(m).dot(np.asarray(v))
-    # print(np.asarray(m).shape)
-    # print(np.asarray(v).shape)
-
-    # compute the dot product of m(atrix) & v(ector)
-    assert len(m[0]) == len(v)
-    
-    res = [0.0 for _ in range(len(m))]
-    for i in range(len(m)):
-      for j in range(len(m[i])):
-        res[i] += m[i][j] * v[j]
-    return res
+    return np.asarray(m).dot(np.asarray(v))
   
   @staticmethod
   def component_wise_apply(m1, m2, fn):
@@ -36,7 +26,7 @@ class Math:
     if isinstance(m1, list) and isinstance(m2, list):
       assert len(m1) == len(m2)
       return [Math.add(row1, row2) for row1, row2 in zip(m1, m2)]
-    return m1 + m2
+    return np.asarray(m1) + np.asarray(m2)
   
   @staticmethod 
   def sigmoid(x):

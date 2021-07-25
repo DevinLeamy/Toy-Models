@@ -28,7 +28,7 @@ random.shuffle(Y_train)
 random.shuffle(X_test)
 random.shuffle(Y_test)
 
-# MAX = 128 
+# MAX = 3 
 
 # X_train = X_train[:MAX]
 # Y_train = Y_train[:MAX]
@@ -36,5 +36,6 @@ random.shuffle(Y_test)
 # Y_test = Y_test[:MAX]
 
 N = NN([784, 128, 10])
-N.train(X_train, Y_train)
+# N.train(X_train, Y_train)
+N.train(X_test, Y_test)
 print(N.test(X_test, Y_test))
