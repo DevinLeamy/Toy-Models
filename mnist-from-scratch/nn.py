@@ -1,4 +1,4 @@
-from _math import Math
+# from _math import Math
 import time
 import random
 from tqdm import trange
@@ -72,7 +72,7 @@ class NN():
     y_hat = cache["A3"] 
     grads["A3"] = self.compute_derivative_c_wrt_a(y, y_hat)
 
-    # partial = sigmoid(cache["Z3"], derivative=True) * grads["A3"] 
+    # partial = softmax(cache["Z3"], derivative=True) * grads["A3"] 
     partial = sigmoid(cache["Z3"], derivative=True) * grads["A3"] 
     grads["W3"] = np.outer(cache["A2"], partial)
     grads["A2"] = np.dot(self.l3.T, partial)
@@ -130,5 +130,5 @@ class NN():
         # t_delta_l3 += delta_l3
         self.update_weights(delta_l1, delta_l2, delta_l3)
       # self.update_weights(t_delta_l1 / self.batch_sz, t_delta_l2 / self.batch_sz, t_delta_l3 / self.batch_sz)
-      accuracies.append(self.test(test_x, test_y)))
+      accuracies.append(self.test(test_x, test_y))
       print(accuracies[-1])

@@ -1,7 +1,6 @@
 import numpy as np
 import random
-from round3 import NN
-# from nn import NN
+from nn import NN
 # from comp import DeepNeuralNetwork
 import gzip, os
 np.set_printoptions(suppress=True)
@@ -31,4 +30,3 @@ print(np.asarray(Y_test).shape)
 nn = NN([28 * 28, 128, 64, 10])
 
 nn.train(X_train, Y_train, X_test, Y_test)
-print(nn.test(X_test, Y_test))
