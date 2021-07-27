@@ -1,2 +1,4 @@
 /res/*
 fix.txt
+.DS_Store
+/.ipynb_checkpoints/

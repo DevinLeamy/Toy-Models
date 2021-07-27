@@ -98,7 +98,7 @@ class NN():
     self.l3["B"] = self.initialize_bias(self.OUT)
   
   def initialize_weights(self, c_layer, n_layer):
-    return np.random.randn(n_layer, c_layer) * np.sqrt(1.0 / c_layer)
+    return np.random.randn(n_layer, c_layer) # * np.sqrt(1.0 / c_layer)
   
   def initialize_bias(self, n_layer):
     return np.random.randn(n_layer) * np.sqrt(1.0 / n_layer)
