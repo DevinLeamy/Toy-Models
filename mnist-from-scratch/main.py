@@ -27,6 +27,6 @@ print(np.asarray(Y_train).shape)
 print(np.asarray(X_test).shape)
 print(np.asarray(Y_test).shape)
 
-nn = NN([28 * 28, 128, 64, 10])
+nn = NN([28 * 28, 128, 64, 10], epochs=1000)
 
 nn.train(X_train, Y_train, X_test, Y_test)
