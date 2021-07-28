@@ -68,7 +68,7 @@ class Plot():
 
     number_rows = []
     for i in range(side_len):
-      number_rows.append(np.hstack(inputs[i + j] for j in range(side_len)))
+      number_rows.append(np.hstack(inputs[i * side_len + j] for j in range(side_len)))
     
     number_matrix = np.vstack(row for row in number_rows)
     plt.imshow(number_matrix)
